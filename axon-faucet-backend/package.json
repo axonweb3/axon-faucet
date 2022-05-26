@@ -1,0 +1,29 @@
+{
+  "name": "axon-faucet-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "lint": "eslint src/*"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "ethers": "^5.6.7",
+    "express": "^4.17.1",
+    "mongodb": "^4.6.0",
+    "typescript": "^4.6.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.13",
+    "@types/node": "^17.0.33",
+    "@typescript-eslint/eslint-plugin": "^5.25.0",
+    "@typescript-eslint/parser": "^5.25.0",
+    "eslint": "^8.15.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-import-resolver-typescript": "^2.7.1",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-sonarjs": "^0.13.0",
+    "ts-node": "^10.7.0"
+  }
+}
