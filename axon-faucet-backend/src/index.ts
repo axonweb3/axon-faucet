@@ -164,6 +164,7 @@ APP.get("/createTestData", async (req, res) => {
   res.send("Test data created");
 });
 
+// http://localhost:8501/importMnemonic?mnemonic=test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20junk&count=10
 APP.get("/importMnemonic", async (req, res) => {
   const { mnemonic: mnemonicRaw, count: countRaw, path: pathRaw } = req.query;
 
@@ -373,9 +374,17 @@ APP.post("/claim", async (req, res) => {
     { $push: { pending_amount: (-CLAIM_VALUE).toString() } },
   );
 
+  const accountNonce = await signer.provider.getTransactionCount(signer.address) + 1;
+
   const txResponse = await signer.sendTransaction({
     to: account,
+    type: 2,
     value: CLAIM_VALUE,
+    maxPriorityFeePerGas: 3,
+    maxFeePerGas: 3,
+    gasLimit: 21000,
+    nonce: accountNonce,
+    chainId: Number(AXON_FAUCET_CHAIN_ID),
   });
 
   const {

@@ -22,7 +22,8 @@ export default function App() {
   }, []);
 
   return (
-    <RequesterContext.Provider value={Axios.create({ baseURL: "http://localhost:3030" })}>
+  // eslint-disable-next-line max-len
+    <RequesterContext.Provider value={Axios.create({ baseURL: process.env.REACT_APP_BACKEND_PPOINT })}>
       <BrowserRouter>
         <div className="App d-flex flex-column">
           <Routes />
