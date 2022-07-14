@@ -39,6 +39,11 @@ services:
     image: mongo:latest
     container_name: faucet-mongo
     restart: always
+    user: root
+    privileged: true
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${AXON_FAUCET_MONGODB_PASSWORD}
     volumes:
       - "./data/db:/data/db"
       - "./data/log:/data/log"
@@ -46,7 +51,6 @@ services:
       - "27017:27017"
     networks:
       - faucet-network
-    command: --dbpath /data/db --logpath /data/log/dblog.log
 
 networks:
   faucet-network:
