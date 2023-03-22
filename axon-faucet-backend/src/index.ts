@@ -100,12 +100,37 @@ const APP = express();
 APP.use(express.json());
 APP.use(cors());
 
+function withErrorHandler(
+  handler: (req: express.Request, res: express.Response) => Promise<unknown>,
+) {
+  return async (req: express.Request, res: express.Response, next) => {
+    try {
+      return await handler(req, res);
+    } catch (err) {
+      next(err);
+    }
+    return null;
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+APP.use((err, req, res, next) => {
+  const { url, body } = req;
+  const { message } = err;
+  consolePretty(message, { url, body });
+
+  const errorMsg = `{ url: ${url}, body: ${JSON.stringify(body)}, err: ${message}, stack: ${err.stack} }`;
+  console.error(errorMsg);
+
+  res.status(500).send(errorMsg);
+});
+
 const PROVIDER = new ethers.providers.JsonRpcProvider(
   AXON_FAUCET_RPC_URL,
   CHAIN_ID,
 );
 
-APP.get("/createTestData", async (req, res) => {
+APP.get("/createTestData", withErrorHandler(async (req, res) => {
   await Promise.all([
     ADDRESSES.insertMany([
       {
@@ -162,10 +187,10 @@ APP.get("/createTestData", async (req, res) => {
   ]);
 
   res.send("Test data created");
-});
+}));
 
 // http://localhost:8501/importMnemonic?mnemonic=test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20junk&count=10
-APP.get("/importMnemonic", async (req, res) => {
+APP.get("/importMnemonic", withErrorHandler(async (req, res) => {
   const { mnemonic: mnemonicRaw, count: countRaw, path: pathRaw } = req.query;
 
   const count = Number(countRaw);
@@ -207,7 +232,7 @@ APP.get("/importMnemonic", async (req, res) => {
   })));
 
   res.send("Mnemonic imported");
-});
+}));
 
 async function clearDirtyAddresses() {
   const possibleAddresses = await ADDRESSES.find(
@@ -249,7 +274,7 @@ async function clearDirtyAddresses() {
   }
 }
 
-APP.get("/totalBalance", async (req, res) => {
+APP.get("/totalBalance", withErrorHandler(async (req, res) => {
   const addresses = await ADDRESSES.find({}).project({
     balance: 1,
     pending_amount: 1,
@@ -267,7 +292,7 @@ APP.get("/totalBalance", async (req, res) => {
   res.end();
 
   await clearDirtyAddresses();
-});
+}));
 
 function parseNumberOr(str: string, or: number): number {
   const res = Number(str);
@@ -287,7 +312,7 @@ const GET_TRANSACTIONS_STATUS = {
   undefined: [0, 1, 2],
 };
 
-APP.get("/transactions", async (req, res) => {
+APP.get("/transactions", withErrorHandler(async (req, res) => {
   const { page: pageStr, limit: limitStr, status: statusStr } = req.query;
   const status = GET_TRANSACTIONS_STATUS[String(statusStr)];
   if (!status) {
@@ -344,9 +369,9 @@ APP.get("/transactions", async (req, res) => {
   );
 
   res.send(transactions);
-});
+}));
 
-APP.post("/claim", async (req, res) => {
+APP.post("/claim", withErrorHandler(async (req, res) => {
   const { account: accountRaw } = req.body;
   const account = String(accountRaw);
 
@@ -374,17 +399,11 @@ APP.post("/claim", async (req, res) => {
     { $push: { pending_amount: (-CLAIM_VALUE).toString() } },
   );
 
-  const accountNonce = await signer.provider.getTransactionCount(signer.address) + 1;
-
   const txResponse = await signer.sendTransaction({
     to: account,
     type: 2,
     value: CLAIM_VALUE,
-    maxPriorityFeePerGas: 3,
-    maxFeePerGas: 3,
     gasLimit: 21000,
-    nonce: accountNonce,
-    chainId: Number(AXON_FAUCET_CHAIN_ID),
   });
 
   const {
@@ -434,7 +453,7 @@ APP.post("/claim", async (req, res) => {
     { $set: { status: TransactionStatus.Confirmed } },
   );
   consolePretty("[Claim] Transaction confirmed", result);
-});
+}));
 
 CONNECTING_DB
   .then(() => {
