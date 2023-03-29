@@ -1,9 +1,10 @@
 import { TransactionStatus } from '@/lib/constants';
 import { connectToDatabase } from '@/lib/database';
-import { Transaction } from '@/models/transaction';
+import { ITransaction, Transaction } from '@/models/transaction';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 type Data = {
+  transactions?: ITransaction[];
   message?: string;
 };
 
@@ -29,15 +30,15 @@ export default async function handler(
   }
 
   const { page, limit, status = DEFAULT_STATUS } = req.query;
-  console.log(page, limit, status);
 
   const pageNum = parseInt(page as string, 10) ?? DEFAULT_PAGE_NUM;
   const limitNum = parseInt(limit as string, 10) ?? DEFAULT_SIZE_LIMIT;
 
-  const transcations = await Transaction.find({ status: { $in: status } })
+  const transactions = await Transaction.find({ status: { $in: status } })
     .skip(pageNum * limitNum)
     .limit(limitNum);
 
-  console.log(transcations);
-  res.end();
+  res.status(200).json({
+    transactions,
+  });
 }
