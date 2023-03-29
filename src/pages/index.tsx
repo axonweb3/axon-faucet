@@ -95,7 +95,7 @@ export default function Home() {
               return (
                 <div className="relative " key={tx._id}>
                   <div className="absolute -bottom-1 -left-1 bg-axon-theme border border-gray-400 w-full h-full -z-10" />
-                  <div className="flex flex-col p-6 mb-8 bg-white border border-gray-400 z-30">
+                  <div className="flex flex-col p-8 mb-8 bg-white border border-gray-400 z-30">
                     <div className="flex flex-col sm:flex-row justify-between pb-2 border-b border-gray-200">
                       <span>{getAbbreviation(tx.from, 12, 20)}</span>
                       <span className="text-gray-600">
