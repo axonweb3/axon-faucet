@@ -35,6 +35,7 @@ export default async function handler(
   const limitNum = parseInt(limit as string, 10) ?? DEFAULT_SIZE_LIMIT;
 
   const transactions = await Transaction.find({ status: { $in: status } })
+    .sort({ time: 'desc' })
     .skip(pageNum * limitNum)
     .limit(limitNum);
 

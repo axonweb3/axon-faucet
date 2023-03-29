@@ -1,15 +1,35 @@
 import useSWR from 'swr';
 import { fetcher, formatValue, getAbbreviation } from '@/lib/utils';
+import BeatLoader from 'react-spinners/BeatLoader';
+import Button from 'react-bootstrap/Button';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ITransaction } from '@/models/transaction';
-import Badge, { BadgeType } from '@/components/badge';
+import Badge from '@/components/badge';
 import { TransactionStatus } from '@/lib/constants';
+import React from 'react';
 
 export default function Home() {
-  const { data, error, isLoading } = useSWR('/api/transactions', fetcher);
-  const { transactions = [] } = data ?? {};
+  const [address, setAddress] = React.useState('');
+  const [claiming, setClaiming] = React.useState(false);
+  const { data: totalBalanceData } = useSWR('/api/total-balance', fetcher);
+  const { data: txsData, mutate } = useSWR('/api/transactions', fetcher);
+  const { transactions = [] } = txsData ?? {};
+
+  const handleClaim = React.useCallback(async () => {
+    if (claiming || !address) {
+      return;
+    }
+    setClaiming(true);
+    await fetch('/api/claim', {
+      method: 'POST',
+      body: JSON.stringify({ account: address }),
+    });
+    mutate();
+    setAddress('');
+    setClaiming(false);
+  }, [address, claiming, mutate]);
 
   return (
     <>
@@ -23,7 +43,7 @@ export default function Home() {
           </Link>
         </div>
         <div
-          className="flex flex-col justify-center items-center bg-cover w-full sm:min-h-[60vh]"
+          className="flex flex-col justify-center items-center bg-cover w-full sm:min-h-[30vh]"
           style={{ backgroundImage: `url(/background.webp)` }}
         >
           <div className="flex flex-col justify-center items-center pt-10">
@@ -34,18 +54,37 @@ export default function Home() {
               width={200}
               alt="Axon"
             />
-            <h1 className="font-alfarn-2 text-7xl tracking-wide text-gray-800 text-center">
+            <h1 className="mb-20 font-alfarn-2 text-5xl tracking-wide text-gray-800 text-center">
               Axon Faucet
             </h1>
           </div>
-          <div className="flex mt-20 mb-12 w-full justify-center">
+          <div className="flex mb-10 w-full justify-center px-6 max-w-screen-sm">
             <input
-              className="h-10 w-8/12 sm:w-5/12 2xl:w-2/12 outline-none px-3 rounded-tl-lg rounded-bl-lg"
+              className="h-10 w-full outline-none px-3 rounded-tl-lg rounded-bl-lg"
               placeholder="Enter your Axon address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
             />
-            <div className="flex flex-col justify-center px-3 border-2 border-white bg-axon-theme hover:bg-opacity-70 cursor-pointer">
-              <span>Claim</span>
-            </div>
+            <Button
+              className={`flex flex-col w-24 h-10 justify-center items-center px-3 border-2 border-white bg-axon-theme hover:bg-opacity-70 ${
+                claiming ? 'cursor-not-allowed bg-opacity-70' : 'cursor-pointer'
+              }`}
+              onClick={handleClaim}
+              disabled={claiming}
+            >
+              {claiming ? (
+                <BeatLoader color="#1E2430" size={10} />
+              ) : (
+                <span className="text-gray-800 font-semibold">Claim</span>
+              )}
+            </Button>
+          </div>
+          <div className="mb-16">
+            <span>
+              There are{' '}
+              {totalBalanceData ? formatValue(totalBalanceData.total) : '-.--'}{' '}
+              Token(s) left in Axon Faucet
+            </span>
           </div>
         </div>
         <div className="container mx-auto px-4 py-8 mt-10 max-w-screen-md">

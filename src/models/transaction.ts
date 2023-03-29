@@ -1,7 +1,8 @@
+import { TransactionStatus } from '@/lib/constants';
 import mongoose, { Model, Schema, model } from 'mongoose';
 
 export interface ITransaction {
-  _id: string;
+  _id?: string;
   from: string;
   to: string;
   value: string;
@@ -9,7 +10,7 @@ export interface ITransaction {
   nonce: string;
   hash: string;
   time: Date;
-  status: number;
+  status: TransactionStatus;
 }
 
 export const TransactionSchema = new Schema<ITransaction>(
