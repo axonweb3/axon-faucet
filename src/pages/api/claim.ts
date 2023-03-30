@@ -4,6 +4,8 @@ import { Address } from '@/models/address';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Transaction } from '@/models/transaction';
 import { TransactionStatus } from '@/lib/constants';
+import provider from '@/lib/provider';
+import { ZodError, z } from 'zod';
 
 type Data =
   | {
@@ -15,22 +17,17 @@ type Data =
       gas: string;
     }
   | {
-      message?: string;
+      message: string;
+      error?: ZodError;
     };
 
 connectToDatabase();
 
-const {
-  AXON_FAUCET_REQUIRED_CONFIRMATIONS,
-  AXON_FAUCET_CLAIM_VALUE,
-  AXON_FAUCET_RPC_URL,
-  AXON_FAUCET_CHAIN_ID,
-} = process.env;
+const { AXON_FAUCET_REQUIRED_CONFIRMATIONS, AXON_FAUCET_CLAIM_VALUE } = process.env;
 
-const provider = new ethers.JsonRpcProvider(
-  AXON_FAUCET_RPC_URL,
-  parseInt(AXON_FAUCET_CHAIN_ID!),
-);
+const schema = z.object({
+  account: z.string(),
+});
 
 export default async function handler(
   req: NextApiRequest,
@@ -43,7 +40,15 @@ export default async function handler(
     return;
   }
 
-  const { account } = JSON.parse(req.body);
+  const params = schema.safeParse(JSON.parse(req.body));
+  if (!params.success) {
+    res.status(400).json({
+      message: 'Invalid request',
+      error: params.error,
+    });
+    return;
+  }
+  const { account } = params.data;
 
   const cursor = Address.find({}).sort({ private_key: 1 }).cursor();
   let fromAddress;
@@ -52,7 +57,14 @@ export default async function handler(
     address != null;
     address = await cursor.next()
   ) {
-    if (BigInt(address.balance) > BigInt(AXON_FAUCET_CLAIM_VALUE!)) {
+    const pendingAmount = address.pending_amount.reduce(
+      (sum, amount) => sum + parseInt(amount, 10),
+      0,
+    );
+    if (
+      parseInt(address.balance, 10) + pendingAmount >
+      parseInt(AXON_FAUCET_CLAIM_VALUE!, 10)
+    ) {
       fromAddress = address;
       break;
     }
@@ -61,10 +73,11 @@ export default async function handler(
 
   const signer = new ethers.Wallet(fromAddress?.private_key!, provider);
   const from = signer.address;
+  const amount = (-AXON_FAUCET_CLAIM_VALUE!).toString();
 
   await Address.updateOne(
     { private_key: fromAddress?.private_key },
-    { $push: { pending_amount: (-AXON_FAUCET_CLAIM_VALUE!).toString() } },
+    { $push: { pending_amount: amount } },
   );
 
   const tx = await signer.sendTransaction({
@@ -93,11 +106,16 @@ export default async function handler(
 
   await tx.wait(parseInt(AXON_FAUCET_REQUIRED_CONFIRMATIONS!, 10));
   await Transaction.updateOne(
+    { hash: tx.hash },
+    { $set: { status: TransactionStatus.Confirmed } },
+  );
+
+  const balance = await provider.getBalance(signer.getAddress());
+  await Address.updateOne(
+    { private_key: fromAddress?.private_key! },
     {
-      hash: tx.hash,
-    },
-    {
-      $set: { status: TransactionStatus.Confirmed },
+      balance,
+      $pop: { pending_amount: 1 },
     },
   );
 }

@@ -2,10 +2,13 @@ import { connectToDatabase } from '@/lib/database';
 import { Address, IAddress } from '@/models/address';
 import { NextApiRequest, NextApiResponse } from 'next';
 
-type Data = {
-  total?: number;
-  message?: string;
-};
+type Data =
+  | {
+      balance: string;
+    }
+  | {
+      message?: string;
+    };
 
 connectToDatabase();
 
@@ -22,7 +25,7 @@ export default async function handler(
 
   const address = await Address.find({});
 
-  const totalBalance = address.reduce((total: number, address: IAddress) => {
+  const balance = address.reduce((total: number, address: IAddress) => {
     const balance =
       parseInt(address.balance, 10) +
       address.pending_amount.reduce(
@@ -33,6 +36,6 @@ export default async function handler(
   }, 0);
 
   res.status(200).json({
-    total: totalBalance,
+    balance: balance.toString(),
   });
 }

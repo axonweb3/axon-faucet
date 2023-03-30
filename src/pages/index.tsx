@@ -13,7 +13,8 @@ import React from 'react';
 export default function Home() {
   const [address, setAddress] = React.useState('');
   const [claiming, setClaiming] = React.useState(false);
-  const { data: totalBalanceData } = useSWR('/api/total-balance', fetcher);
+  const [errorMessage, setErrorMessage] = React.useState('');
+  const { data: balanceData } = useSWR('/api/balance', fetcher);
   const { data: txsData, mutate } = useSWR('/api/transactions', fetcher);
   const { transactions = [] } = txsData ?? {};
 
@@ -21,13 +22,20 @@ export default function Home() {
     if (claiming || !address) {
       return;
     }
+    setErrorMessage('');
     setClaiming(true);
-    await fetch('/api/claim', {
+    const response = await fetch('/api/claim', {
       method: 'POST',
       body: JSON.stringify({ account: address }),
     });
-    mutate();
-    setAddress('');
+    if (response.status === 200) {
+      mutate();
+      setAddress('');
+      setErrorMessage('');
+    } else {
+      const { message } = await response.json();
+      setErrorMessage(message);
+    }
     setClaiming(false);
   }, [address, claiming, mutate]);
 
@@ -58,31 +66,40 @@ export default function Home() {
               Axon Faucet
             </h1>
           </div>
-          <div className="flex mb-10 w-full justify-center px-6 max-w-screen-sm">
-            <input
-              className="h-10 w-full outline-none px-3 rounded-tl-lg rounded-bl-lg"
-              placeholder="Enter your Axon address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
-            <Button
-              className={`flex flex-col w-24 h-10 justify-center items-center px-3 border-2 border-white bg-axon-theme hover:bg-opacity-70 ${
-                claiming ? 'cursor-not-allowed bg-opacity-70' : 'cursor-pointer'
-              }`}
-              onClick={handleClaim}
-              disabled={claiming}
-            >
-              {claiming ? (
-                <BeatLoader color="#1E2430" size={10} />
-              ) : (
-                <span className="text-gray-800 font-semibold">Claim</span>
-              )}
-            </Button>
+          <div className="relative flex flex-col mb-12 w-full px-6 max-w-screen-sm">
+            <div className="flex w-full justify-center">
+              <input
+                className="h-10 w-full outline-none px-3 rounded-tl-lg rounded-bl-lg"
+                placeholder="Enter your Axon address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+              <Button
+                className={`flex flex-col w-24 h-10 justify-center items-center px-3 border-2 border-white bg-axon-theme hover:bg-opacity-70 ${
+                  claiming
+                    ? 'cursor-not-allowed bg-opacity-70'
+                    : 'cursor-pointer'
+                }`}
+                onClick={handleClaim}
+                disabled={claiming}
+              >
+                {claiming ? (
+                  <BeatLoader color="#1E2430" size={10} />
+                ) : (
+                  <span className="text-gray-800 font-semibold">Claim</span>
+                )}
+              </Button>
+            </div>
+            {errorMessage && (
+              <div className="absolute -bottom-6 left-6 text-sm text-red-600 mt-1">
+                <span>Error: {errorMessage}</span>
+              </div>
+            )}
           </div>
           <div className="mb-16">
             <span>
               There are{' '}
-              {totalBalanceData ? formatValue(totalBalanceData.total) : '-.--'}{' '}
+              {balanceData ? formatValue(balanceData.balance) : '-.--'}{' '}
               Token(s) left in Axon Faucet
             </span>
           </div>
@@ -97,13 +114,26 @@ export default function Home() {
                   <div className="absolute -bottom-1 -left-1 bg-axon-theme border border-gray-400 w-full h-full -z-10" />
                   <div className="flex flex-col p-8 mb-8 bg-white border border-gray-400 z-30">
                     <div className="flex flex-col sm:flex-row justify-between pb-2 border-b border-gray-200">
-                      <span>{getAbbreviation(tx.from, 12, 20)}</span>
+                      <span>{getAbbreviation(tx.hash, 12, 20)}</span>
                       <span className="text-gray-600">
                         {date.toLocaleDateString()} {date.toLocaleTimeString()}
                       </span>
                     </div>
-                    <div className="flex flex-row justify-between pt-2">
-                      <span>TO: {getAbbreviation(tx.to, 12, 10)}</span>
+                    <div className="flex flex-col sm:flex-row justify-between pt-2">
+                      <div className="table">
+                        <div className="table-row">
+                          <span className="table-cell w-16">FROM: </span>
+                          <span className="table-cell">
+                            {getAbbreviation(tx.from, 12, 20)}
+                          </span>
+                        </div>
+                        <div className="table-row">
+                          <span className="table-cell w-16">TO: </span>
+                          <span className="table-cell">
+                            {getAbbreviation(tx.to, 12, 20)}
+                          </span>
+                        </div>
+                      </div>
                       <span>
                         {formatValue(parseInt(tx.value, 10))} Token(s)
                       </span>

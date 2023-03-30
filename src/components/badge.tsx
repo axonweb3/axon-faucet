@@ -18,10 +18,10 @@ function Badge(props: IBadgeProps) {
 
   return (
     <div
-      className="inline-block w-28 py-1 text-center rounded-md text-white bg-opacity-75"
+      className="inline-block w-24 py-0.5 text-center rounded-md text-white bg-opacity-75"
       style={{ backgroundColor: color }}
     >
-      <span className="text-sm">{text}</span>
+      <span className="text-xs">{text}</span>
     </div>
   );
 }
