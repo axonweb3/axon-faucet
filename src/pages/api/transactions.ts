@@ -1,5 +1,6 @@
 import { TransactionStatus } from '@/lib/constants';
 import { connectToDatabase } from '@/lib/database';
+import env from '@/lib/env';
 import provider from '@/lib/provider';
 import { ITransaction, Transaction } from '@/models/transaction';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -11,7 +12,8 @@ type Data = {
 
 connectToDatabase();
 
-const { AXON_FAUCET_REQUIRED_CONFIRMATIONS } = process.env;
+console.log(env);
+const { AXON_FAUCET_REQUIRED_CONFIRMATIONS } = env;
 
 const DEFAULT_STATUS = [
   TransactionStatus.Failed,
@@ -52,7 +54,7 @@ export default async function handler(
       .map(async ({ hash }) => {
         const receipt = await provider.getTransactionReceipt(hash);
         const confirmations = (await receipt?.confirmations()) ?? 0;
-        if (confirmations > parseInt(AXON_FAUCET_REQUIRED_CONFIRMATIONS!, 10)) {
+        if (confirmations > AXON_FAUCET_REQUIRED_CONFIRMATIONS) {
           await Transaction.updateOne(
             { hash },
             { status: TransactionStatus.Confirmed },

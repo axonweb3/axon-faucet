@@ -5,6 +5,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Transaction } from '@/models/transaction';
 import { TransactionStatus } from '@/lib/constants';
 import provider from '@/lib/provider';
+import env from '@/lib/env';
 import { ZodError, z } from 'zod';
 
 type Data =
@@ -23,7 +24,7 @@ type Data =
 
 connectToDatabase();
 
-const { AXON_FAUCET_REQUIRED_CONFIRMATIONS, AXON_FAUCET_CLAIM_VALUE } = process.env;
+const { AXON_FAUCET_REQUIRED_CONFIRMATIONS, AXON_FAUCET_CLAIM_VALUE } = env;
 
 const schema = z.object({
   account: z.string(),
@@ -63,13 +64,20 @@ export default async function handler(
     );
     if (
       parseInt(address.balance, 10) + pendingAmount >
-      parseInt(AXON_FAUCET_CLAIM_VALUE!, 10)
+      AXON_FAUCET_CLAIM_VALUE
     ) {
       fromAddress = address;
       break;
     }
   }
   await cursor.close();
+
+  if (!fromAddress) {
+    res.status(500).json({
+      message: 'Tokens insufficient',
+    });
+    return;
+  }
 
   const signer = new ethers.Wallet(fromAddress?.private_key!, provider);
   const from = signer.address;
@@ -83,7 +91,7 @@ export default async function handler(
   const tx = await signer.sendTransaction({
     to: account,
     type: 2,
-    value: AXON_FAUCET_CLAIM_VALUE,
+    value: AXON_FAUCET_CLAIM_VALUE.toString(),
     gasLimit: 21000,
   });
 
@@ -101,10 +109,9 @@ export default async function handler(
     time: new Date(),
     status: TransactionStatus.Pending,
   }),
+    res.status(200).json(result);
 
-  res.status(200).json(result);
-
-  await tx.wait(parseInt(AXON_FAUCET_REQUIRED_CONFIRMATIONS!, 10));
+  await tx.wait(AXON_FAUCET_REQUIRED_CONFIRMATIONS);
   await Transaction.updateOne(
     { hash: tx.hash },
     { $set: { status: TransactionStatus.Confirmed } },

