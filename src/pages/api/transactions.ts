@@ -1,12 +1,11 @@
 import { TransactionStatus } from '@/lib/constants';
-import { connectToDatabase } from '@/lib/database';
+import { Transaction, collections, connectToDatabase } from '@/lib/database';
 import env from '@/lib/env';
 import provider from '@/lib/provider';
-import { ITransaction, Transaction } from '@/models/transaction';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 type Data = {
-  transactions?: ITransaction[];
+  transactions?: Transaction[];
   message?: string;
 };
 
@@ -19,7 +18,7 @@ const DEFAULT_STATUS = [
   TransactionStatus.Failed,
   TransactionStatus.Pending,
   TransactionStatus.Confirmed,
-];
+] as number[];
 const DEFAULT_PAGE_NUM = 0;
 const DEFAULT_SIZE_LIMIT = 20;
 
@@ -39,10 +38,22 @@ export default async function handler(
   const pageNum = parseInt(page as string, 10) ?? DEFAULT_PAGE_NUM;
   const limitNum = parseInt(limit as string, 10) ?? DEFAULT_SIZE_LIMIT;
 
-  const transactions = await Transaction.find({ status: { $in: status } })
-    .sort({ time: 'desc' })
+  const transactions = await collections.transaction!
+    .find({ status: { $in: status as number[] } })
     .skip(pageNum * limitNum)
-    .limit(limitNum);
+    .limit(limitNum)
+    .project({
+      from: 1,
+      to: 1,
+      value: 1,
+      gas: 1,
+      nonce: 1,
+      hash: 1,
+      time: 1,
+      status: 1,
+    })
+    .sort({ time: -1 })
+    .toArray() as Transaction[];
 
   res.status(200).json({
     transactions,
@@ -55,7 +66,7 @@ export default async function handler(
         const receipt = await provider.getTransactionReceipt(hash);
         const confirmations = (await receipt?.confirmations()) ?? 0;
         if (confirmations > AXON_FAUCET_REQUIRED_CONFIRMATIONS) {
-          await Transaction.updateOne(
+          await collections.transaction!.updateOne(
             { hash },
             { status: TransactionStatus.Confirmed },
           );

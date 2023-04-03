@@ -7,6 +7,8 @@ export interface IEnv {
   AXON_FAUCET_CHAIN_ID: number,
   AXON_FAUCET_MONGODB_URL: string,
   AXON_FAUCET_MONGODB_DB: string,
+  AXON_FAUCET_MONGODB_TRANSACTIONS_COLLECTION: string;
+  AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION: string;
 }
 
 const schema = z.object({
@@ -16,6 +18,8 @@ const schema = z.object({
   AXON_FAUCET_CHAIN_ID: z.string(),
   AXON_FAUCET_MONGODB_URL: z.string(),
   AXON_FAUCET_MONGODB_DB: z.string(),
+  AXON_FAUCET_MONGODB_TRANSACTIONS_COLLECTION: z.string(),
+  AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION: z.string(),
 });
 
 const env = schema.parse(process.env);

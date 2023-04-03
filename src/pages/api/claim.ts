@@ -1,12 +1,11 @@
-import { connectToDatabase } from '@/lib/database';
+import { collections, connectToDatabase } from '@/lib/database';
 import { ethers } from 'ethers';
-import { Address } from '@/models/address';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Transaction } from '@/models/transaction';
 import { TransactionStatus } from '@/lib/constants';
 import provider from '@/lib/provider';
 import env from '@/lib/env';
 import { ZodError, z } from 'zod';
+import { Timestamp } from 'mongodb';
 
 type Data =
   | {
@@ -51,14 +50,14 @@ export default async function handler(
   }
   const { account } = params.data;
 
-  const cursor = Address.find({}).sort({ private_key: 1 }).cursor();
+  const cursor = collections.address!.find({}).sort({ private_key: 1 });
   let fromAddress;
-  for (
-    let address = await cursor.next();
-    address != null;
-    address = await cursor.next()
-  ) {
-    const pendingAmount = address.pending_amount.reduce(
+  while (await cursor.hasNext()) {
+    const address = await cursor.next();
+    if (!address) {
+      break;
+    }
+    const pendingAmount = address!.pending_amount.reduce(
       (sum, amount) => sum + parseInt(amount, 10),
       0,
     );
@@ -83,7 +82,7 @@ export default async function handler(
   const from = signer.address;
   const amount = (-AXON_FAUCET_CLAIM_VALUE!).toString();
 
-  await Address.updateOne(
+  await collections.address!.updateOne(
     { private_key: fromAddress?.private_key },
     { $push: { pending_amount: amount } },
   );
@@ -104,21 +103,21 @@ export default async function handler(
     hash: tx.hash,
     gas: receipt!.gasUsed.toString(),
   };
-  await Transaction.create({
+  await collections.transaction!.insertOne({
     ...result,
-    time: new Date(),
+    time: Timestamp.fromNumber(Date.now()),
     status: TransactionStatus.Pending,
   }),
     res.status(200).json(result);
 
   await tx.wait(AXON_FAUCET_REQUIRED_CONFIRMATIONS);
-  await Transaction.updateOne(
+  await collections.transaction!.updateOne(
     { hash: tx.hash },
     { $set: { status: TransactionStatus.Confirmed } },
   );
 
   const balance = await provider.getBalance(signer.getAddress());
-  await Address.updateOne(
+  await collections.address!.updateOne(
     { private_key: fromAddress?.private_key! },
     {
       balance,

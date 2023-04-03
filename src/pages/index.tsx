@@ -5,10 +5,10 @@ import Button from 'react-bootstrap/Button';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ITransaction } from '@/models/transaction';
 import Badge from '@/components/badge';
 import { TransactionStatus } from '@/lib/constants';
 import React from 'react';
+import { Transaction } from '@/lib/database';
 
 export default function Home() {
   const [address, setAddress] = React.useState('');
@@ -107,10 +107,10 @@ export default function Home() {
         <div className="container mx-auto px-4 py-8 mt-10 max-w-screen-md">
           <h2 className="text-3xl text-gray-800 font-semibold mb-6">Claims</h2>
           <div>
-            {transactions.map((tx: ITransaction) => {
-              const date = new Date(tx.time);
+            {transactions.map((tx: Transaction) => {
+              const date = new Date(+tx.time.$timestamp!);
               return (
-                <div className="relative " key={tx._id}>
+                <div className="relative " key={tx.hash}>
                   <div className="absolute -bottom-1 -left-1 bg-axon-theme border border-gray-400 w-full h-full -z-10" />
                   <div className="flex flex-col p-8 mb-8 bg-white border border-gray-400 z-30">
                     <div className="flex flex-col sm:flex-row justify-between pb-2 border-b border-gray-200">
