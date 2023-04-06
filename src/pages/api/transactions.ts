@@ -1,5 +1,5 @@
 import { TransactionStatus } from '@/lib/constants';
-import { Transaction, collections, connectToDatabase } from '@/lib/database';
+import { Transaction, connectToDatabase } from '@/lib/database';
 import env from '@/lib/env';
 import provider from '@/lib/provider';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -9,9 +9,6 @@ type Data = {
   message?: string;
 };
 
-connectToDatabase();
-
-console.log(env);
 const { AXON_FAUCET_REQUIRED_CONFIRMATIONS } = env;
 
 const DEFAULT_STATUS = [
@@ -32,12 +29,12 @@ export default async function handler(
     });
     return;
   }
-
   const { page, limit, status = DEFAULT_STATUS } = req.query;
 
   const pageNum = parseInt(page as string, 10) ?? DEFAULT_PAGE_NUM;
   const limitNum = parseInt(limit as string, 10) ?? DEFAULT_SIZE_LIMIT;
 
+  const collections = await connectToDatabase();
   const transactions = await collections.transaction!
     .find({ status: { $in: status as number[] } })
     .skip(pageNum * limitNum)

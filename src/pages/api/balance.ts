@@ -1,4 +1,4 @@
-import { connectToDatabase, collections, Address } from '@/lib/database';
+import { connectToDatabase, Address } from '@/lib/database';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 type Data =
@@ -8,8 +8,6 @@ type Data =
   | {
       message?: string;
     };
-
-connectToDatabase();
 
 export default async function handler(
   req: NextApiRequest,
@@ -21,13 +19,13 @@ export default async function handler(
     });
     return;
   }
-
-  const address = await collections
+  const collections = await connectToDatabase();
+  const addresses = await collections
     .address!.find({})
     .project({ balance: 1, pending_amount: 1 })
     .toArray() as Address[];
 
-  const balance = address.reduce((total: number, address: Address) => {
+  const balance = addresses.reduce((total: number, address: Address) => {
     const balance =
       parseInt(address.balance, 10) +
       address.pending_amount.reduce(

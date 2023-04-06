@@ -1,4 +1,4 @@
-import { collections, connectToDatabase } from '@/lib/database';
+import { connectToDatabase } from '@/lib/database';
 import { ethers } from 'ethers';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { TransactionStatus } from '@/lib/constants';
@@ -21,8 +21,6 @@ type Data =
       error?: ZodError;
     };
 
-connectToDatabase();
-
 const { AXON_FAUCET_REQUIRED_CONFIRMATIONS, AXON_FAUCET_CLAIM_VALUE } = env;
 
 const schema = z.object({
@@ -39,6 +37,7 @@ export default async function handler(
     });
     return;
   }
+  const collections = await connectToDatabase();
 
   const params = schema.safeParse(JSON.parse(req.body));
   if (!params.success) {

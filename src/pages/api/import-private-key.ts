@@ -1,11 +1,14 @@
-import { collections } from '@/lib/database';
+import { connectToDatabase } from '@/lib/database';
 import provider from '@/lib/provider';
 import { ethers } from 'ethers';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { ZodError, z } from 'zod';
 
 type Data =
-  | { balance: string }
+  | {
+    address: string,
+    balance: string,
+  }
   | {
       message: string;
       error?: ZodError;
@@ -37,6 +40,7 @@ export default async function handler(
   const address = await signer.getAddress();
   const balance = await provider.getBalance(address);
 
+  const collections = await connectToDatabase();
   const addresses = await collections.address!.find({ private_key }).toArray();
   if (addresses.length > 0) {
     await collections.address!.updateOne({ private_key }, { balance });
@@ -49,5 +53,8 @@ export default async function handler(
     });
   }
 
-  res.status(200).json({ balance: balance.toString() });
+  res.status(200).json({
+    address,
+    balance: balance.toString(),
+  });
 }

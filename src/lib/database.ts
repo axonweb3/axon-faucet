@@ -1,5 +1,5 @@
 // import { connect, connection } from 'mongoose';
-import { Collection, MongoClient } from 'mongodb';
+import { Collection, Db, MongoClient } from 'mongodb';
 import env from './env';
 import { Timestamp } from 'mongodb';
 
@@ -32,20 +32,24 @@ export class Transaction {
   ) {}
 }
 
-export const collections: {
-  transaction?: Collection<Transaction>;
-  address?: Collection<Address>;
-} = {};
+let collections: {
+  transaction: Collection<Transaction>;
+  address: Collection<Address>;
+};
 
 export async function connectToDatabase() {
+  if (collections) {
+    return collections;
+  }
+
   const client = new MongoClient(AXON_FAUCET_MONGODB_URL);
   await client.connect();
   const db = client.db(AXON_FAUCET_MONGODB_DB);
 
-  collections.transaction = db.collection(
-    AXON_FAUCET_MONGODB_TRANSACTIONS_COLLECTION,
-  );
-  collections.address = db.collection(
-    AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION,
-  );
+  collections = {
+    transaction: db.collection(AXON_FAUCET_MONGODB_TRANSACTIONS_COLLECTION),
+    address: db.collection(AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION),
+  };
+
+  return collections;
 }
