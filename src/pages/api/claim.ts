@@ -6,6 +6,9 @@ import provider from '@/lib/provider';
 import env from '@/lib/env';
 import { ZodError, z } from 'zod';
 import { Timestamp } from 'mongodb';
+import { pino } from 'pino';
+
+const logger = pino();
 
 type Data =
   | {
@@ -81,6 +84,8 @@ export default async function handler(
   const from = signer.address;
   const amount = (-AXON_FAUCET_CLAIM_VALUE!).toString();
 
+  logger.info(`[claim] fromAddress: ${from}`);
+
   await collections.address!.updateOne(
     { private_key: fromAddress?.private_key },
     { $push: { pending_amount: amount } },
@@ -106,8 +111,11 @@ export default async function handler(
     ...result,
     time: Timestamp.fromNumber(Date.now()),
     status: TransactionStatus.Pending,
-  }),
-    res.status(200).json(result);
+  });
+
+  logger.info(`[claim] tx: ${JSON.stringify(tx)}`);
+
+  res.status(200).json(result);
 
   await tx.wait(AXON_FAUCET_REQUIRED_CONFIRMATIONS);
   await collections.transaction!.updateOne(

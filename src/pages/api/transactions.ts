@@ -3,6 +3,9 @@ import { Transaction, connectToDatabase } from '@/lib/database';
 import env from '@/lib/env';
 import provider from '@/lib/provider';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { pino } from 'pino';
+
+const logger = pino();
 
 type Data = {
   transactions?: Transaction[];
@@ -51,6 +54,13 @@ export default async function handler(
     })
     .sort({ time: -1 })
     .toArray() as Transaction[];
+
+  logger.info(`[transactions] ${JSON.stringify({
+    page,
+    limit,
+    status,
+    transactions,
+  })}`)
 
   res.status(200).json({
     transactions,

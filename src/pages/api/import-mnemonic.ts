@@ -3,6 +3,9 @@ import provider from '@/lib/provider';
 import { ethers } from 'ethers';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { ZodError, z } from 'zod';
+import { pino } from 'pino';
+
+const logger = pino();
 
 type Data =
   | { address: string; balance: string }[]
@@ -84,7 +87,10 @@ export default async function handler(
     })),
   );
 
+  const response = addresses.map(({ address, balance }) => ({ address, balance }));
+  logger.info(`[import mnemonic] addresses: ${JSON.stringify(response)}`);
+
   res
     .status(200)
-    .json(addresses.map(({ address, balance }) => ({ address, balance })));
+    .json(response);
 }

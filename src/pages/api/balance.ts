@@ -1,5 +1,8 @@
 import { connectToDatabase, Address } from '@/lib/database';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { pino } from 'pino';
+
+const logger = pino();
 
 type Data =
   | {
@@ -34,6 +37,8 @@ export default async function handler(
       );
     return total + balance;
   }, 0);
+
+  logger.info(`[balance] ${balance}`);
 
   res.status(200).json({
     balance: balance.toString(),

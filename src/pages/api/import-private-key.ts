@@ -3,6 +3,9 @@ import provider from '@/lib/provider';
 import { ethers } from 'ethers';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { ZodError, z } from 'zod';
+import { pino } from 'pino';
+
+const logger = pino();
 
 type Data =
   | {
@@ -52,6 +55,8 @@ export default async function handler(
       pending_amount: [],
     });
   }
+
+  logger.info(`[import private key] ${JSON.stringify({ address, balance })}`)
 
   res.status(200).json({
     address,
