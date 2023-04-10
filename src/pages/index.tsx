@@ -45,26 +45,23 @@ export default function Home() {
         <title>Axon Faucet</title>
       </Head>
       <main>
-        <div className="px-2 h-16 w-scrren bg-white shadow-sm border-b border-gray-100">
+        <div className="fixed top-0 px-2 h-16 w-scrren bg-transparent">
           <Link href="https://axonweb3.io">
             <Image width={128} height={64} src="/logo.webp" alt="Axon Logo" />
           </Link>
         </div>
         <div
-          className="flex flex-col justify-center items-center bg-cover w-full sm:min-h-[30vh]"
+          className="flex flex-col justify-center items-center bg-cover w-full sm:min-h-[50vh]"
           style={{ backgroundImage: `url(/background.webp)` }}
         >
-          <div className="flex flex-col justify-center items-center pt-10">
+          <div className="flex flex-col justify-center items-center pt-20">
             <Image
-              className="mb-6"
-              src="/favicon.svg"
-              height={200}
-              width={200}
+              className="mt-12 mb-16"
+              src="/brand.webp"
+              height={269}
+              width={360}
               alt="Axon"
             />
-            <h1 className="mb-20 font-alfarn-2 text-5xl tracking-wide text-gray-800 text-center">
-              Axon Faucet
-            </h1>
           </div>
           <div className="relative flex flex-col mb-12 w-full px-6 max-w-screen-sm">
             <div className="flex w-full justify-center">
