@@ -21,6 +21,9 @@ AXON_FAUCET_CHAIN_ID=<your_axon_chain_id>
 AXON_FAUCET_MONGODB_URL=<mongodb_url_with_password>
 AXON_FAUCET_MONGODB_DB=<mongodb_table_name>
 AXON_FAUCET_MONGODB_PASSWORD=<mongodb_password>
+
+AXON_FAUCET_MONGODB_TRANSACTIONS_COLLECTION=Transactions
+AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION=Addresses
 ```
 
 2. launch via Docker Compose:
@@ -61,6 +64,9 @@ AXON_FAUCET_CHAIN_ID=<your_axon_chain_id>
 AXON_FAUCET_MONGODB_URL=<mongodb_url_with_password>
 AXON_FAUCET_MONGODB_DB=<mongodb_table_name>
 AXON_FAUCET_MONGODB_PASSWORD=<mongodb_password>
+
+AXON_FAUCET_MONGODB_TRANSACTIONS_COLLECTION=Transactions
+AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION=Addresses
 ```
 
 3. Start the development server:
