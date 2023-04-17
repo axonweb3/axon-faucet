@@ -1,12 +1,10 @@
 version: '3'
 
 services:
-  faucet-backend:
-    container_name: faucet-backend
-    build: ./axon-faucet-backend
+  faucet-server:
+    container_name: faucet-server
+    build: ./
     environment:
-      AXON_FAUCET_LISTEN_ADDRESS: ${AXON_FAUCET_LISTEN_ADDRESS}
-      AXON_FAUCET_LISTEN_PORT: ${AXON_FAUCET_LISTEN_PORT}
       AXON_FAUCET_RPC_URL: ${AXON_FAUCET_RPC_URL}
       AXON_FAUCET_CHAIN_ID: ${AXON_FAUCET_CHAIN_ID}
       AXON_FAUCET_REQUIRED_CONFIRMATIONS: ${AXON_FAUCET_REQUIRED_CONFIRMATIONS}
@@ -16,24 +14,11 @@ services:
       AXON_FAUCET_MONGODB_TRANSACTIONS_COLLECTION: ${AXON_FAUCET_MONGODB_TRANSACTIONS_COLLECTION}
       AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION: ${AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION}
     ports:
-      - "8501:3030"
+      - "8502:3000"
     depends_on:
       - faucet-mongo
     networks:
       - faucet-network
-
-  faucet-frontend:
-    container_name: faucet-frontend
-    build: ./axon-faucet-frontend
-    environment:
-      REACT_APP_BACKEND_PPOINT: ${REACT_APP_BACKEND_PPOINT}
-    ports:
-      - "8502:3000"
-    depends_on:
-      - faucet-backend
-    networks:
-      - faucet-network
-
 
   faucet-mongo:
     image: mongo:latest
