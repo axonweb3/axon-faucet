@@ -82,7 +82,7 @@ yarn dev
 
 4. Mnemonic initialization
 ```bash
-curl http://localhost:8502/api/import-mnemonic?mnemonic=test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20junk
+curl http://localhost:3000/api/import-mnemonic?mnemonic=test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20junk
 ```
 
 5. Open your browser and go to [http://localhost:3000/](http://localhost:3000/) to see the website in action.
