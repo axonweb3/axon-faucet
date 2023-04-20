@@ -31,6 +31,11 @@ AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION=Addresses
 docker compose up
 ```
 
+3. Mnemonic initialization
+```bash
+curl http://localhost:8502/api/import-mnemonic?mnemonic=test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20junk
+```
+
 ## Contributing 
 
 To contribute to the Axon Faucet, follow these steps:
@@ -75,7 +80,12 @@ AXON_FAUCET_MONGODB_ADDRESSES_COLLECTION=Addresses
 yarn dev
 ```
 
-4. Open your browser and go to [http://localhost:3000/](http://localhost:3000/) to see the website in action.
+4. Mnemonic initialization
+```bash
+curl http://localhost:8502/api/import-mnemonic?mnemonic=test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20test%20junk
+```
+
+5. Open your browser and go to [http://localhost:3000/](http://localhost:3000/) to see the website in action.
 
 ## Contributing
 
