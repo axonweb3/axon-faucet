@@ -38,8 +38,8 @@ export default async function handler(
   const limitNum = parseInt(limit as string, 10) ?? DEFAULT_SIZE_LIMIT;
 
   const collections = await connectToDatabase();
-  const transactions = await collections.transaction!
-    .find({ status: { $in: status as number[] } })
+  let transactions = (await collections
+    .transaction!.find({ status: { $in: status as number[] } })
     .skip(pageNum * limitNum)
     .limit(limitNum)
     .project({
@@ -53,23 +53,21 @@ export default async function handler(
       status: 1,
     })
     .sort({ time: -1 })
-    .toArray() as Transaction[];
+    .toArray()) as Transaction[];
 
-  logger.info(`[transactions] ${JSON.stringify({
-    page,
-    limit,
-    status,
-    transactions,
-  })}`)
+  logger.info(
+    `[transactions] ${JSON.stringify({
+      page,
+      limit,
+      status,
+      transactions,
+    })}`,
+  );
 
-  res.status(200).json({
-    transactions,
-  });
-
-  await Promise.all(
-    transactions
-      .filter(({ status }) => status === TransactionStatus.Pending)
-      .map(async ({ hash }) => {
+  transactions = await Promise.all(
+    transactions.map(async (tx) => {
+      if (tx.status === TransactionStatus.Pending) {
+        const { hash } = tx;
         const receipt = await provider.getTransactionReceipt(hash);
         const confirmations = (await receipt?.confirmations()) ?? 0;
         if (confirmations > AXON_FAUCET_REQUIRED_CONFIRMATIONS) {
@@ -77,7 +75,14 @@ export default async function handler(
             { hash },
             { status: TransactionStatus.Confirmed },
           );
+          tx.status = TransactionStatus.Confirmed;
         }
-      }),
+      }
+      return tx;
+    }),
   );
+
+  res.status(200).json({
+    transactions,
+  });
 }
